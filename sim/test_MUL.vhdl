@@ -9,15 +9,16 @@ architecture testbench of test_MUL is
     component MUL is
         port (
             clk     : in  std_logic;                      -- Added clock for M register
+            reset   : in  std_logic;
             enable  : in  std_logic;
             a       : in  std_logic_vector(11 downto 0);
             b       : in  std_logic_vector(11 downto 0);
             result  : out std_logic_vector(23 downto 0)
         );
     end component MUL;
-    signal clk : std_logic := '0';
+    signal clk, reset : std_logic := '0';
     signal enable : std_logic := '1';
-    signal a_in, b_in : std_logic_vector(11 downto 0);
+    signal a_in, b_in : std_logic_vector(11 downto 0) := (others => '0');
     signal result_out : std_logic_vector(23 downto 0);
 
 begin
@@ -25,6 +26,7 @@ begin
         port map (
             clk => clk,
             enable => enable,
+            reset => reset,
             a => a_in,
             b => b_in,
             result => result_out
@@ -40,6 +42,11 @@ begin
     process
     begin
     -- Reset time
+    reset <= '1';
+    wait for 10 ns;
+    reset <= '0';
+    wait for 10 ns;
+
     a_in <= "000000000000"; -- 0
     b_in <= "000000000000"; -- 0
     wait for 10 ns;

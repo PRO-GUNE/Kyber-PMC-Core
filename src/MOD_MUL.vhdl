@@ -17,6 +17,7 @@ architecture Behavioral of MOD_MUL is
     component MUL
         port (
             clk     : in  std_logic;                      -- Added clock for M register
+            reset   : in  std_logic;
             enable  : in  std_logic;
             a       : in  std_logic_vector(11 downto 0);
             b       : in  std_logic_vector(11 downto 0);
@@ -27,7 +28,7 @@ architecture Behavioral of MOD_MUL is
     component MOD_K2_RED
         port (
             clk     : in std_logic;  -- Added clock input
-            reset     : in std_logic;  -- Added reset input
+            reset   : in std_logic;  -- Added reset input
             c_in    : in std_logic_vector(23 downto 0);
             c_out   : out std_logic_vector(11 downto 0)
         );
@@ -40,6 +41,7 @@ begin
         port map(
             clk => clk,
             enable => enable,
+            reset => reset,
             a => a,
             b => b,
             result => mul_out

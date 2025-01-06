@@ -41,6 +41,8 @@ begin
 
                 temp_diff_reg <= (others => '0');
                 corrected_diff_reg <= (others => '0');
+                a_extended <= (others => '0');
+                b_extended <= (others => '0');
 
             elsif enable = '1' then
 

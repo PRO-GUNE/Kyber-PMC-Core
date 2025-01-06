@@ -5,6 +5,7 @@ use ieee.numeric_std.all;
 entity MUL is
     port (
         clk     : in  std_logic;                      -- Added clock for M register
+        reset   : in  std_logic;
         enable  : in  std_logic;
         a       : in  std_logic_vector(11 downto 0);
         b       : in  std_logic_vector(11 downto 0);
@@ -24,9 +25,14 @@ architecture rtl of MUL is
 
 begin
     -- Register inputs for DSP M register inference
-    process(clk)
+    process(clk, reset)
     begin
-        if rising_edge(clk) then
+        if reset='1' then
+            a_reg <= (others => '0');
+            b_reg <= (others => '0');
+            mult_result <= (others => '0');
+
+        elsif rising_edge(clk) then
             if enable = '1' then
                 -- Input registers
                 a_reg <= a;
