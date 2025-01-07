@@ -13,11 +13,14 @@ architecture testbench of test_MOD_MUL is
             enable : in  std_logic;
             a      : in  std_logic_vector(11 downto 0);
             b      : in  std_logic_vector(11 downto 0);
-            mult   : out std_logic_vector(11 downto 0)
+            mult   : out std_logic_vector(11 downto 0);
+            -- debug outputs
+            c      : out std_logic_vector(23 downto 0)
         );
     end component;
 
     signal a_in, b_in, mult : std_logic_vector(11 downto 0) := (others => '0');
+    signal c : std_logic_vector(23 downto 0) := (others => '0');
     signal clk, reset : std_logic := '0';
     signal enable : std_logic := '1';
 
@@ -30,7 +33,8 @@ begin
         enable => enable,
         a => a_in,
         b => b_in,
-        mult => mult
+        mult => mult,
+        c => c
     );
 
     clk_process : process

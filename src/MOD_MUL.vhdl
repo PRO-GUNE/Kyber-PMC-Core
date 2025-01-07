@@ -9,7 +9,10 @@ entity MOD_MUL is
         enable : in  std_logic;
         a      : in  std_logic_vector(11 downto 0);
         b      : in  std_logic_vector(11 downto 0);
-        mult   : out std_logic_vector(11 downto 0)
+        mult   : out std_logic_vector(11 downto 0);
+
+        -- debug outputs
+        c      : out std_logic_vector(23 downto 0)
     );
 end entity MOD_MUL;
 
@@ -54,4 +57,7 @@ begin
             c_in => mul_out,
             c_out => mult
         );
+
+    c <= mul_out;
+
 end architecture Behavioral;
