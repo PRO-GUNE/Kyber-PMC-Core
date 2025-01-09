@@ -5,6 +5,7 @@ library ieee ;
 entity ADDR_MAP is
   port (
     clk : in std_logic;
+    reset : in std_logic;
     addr_0 : in std_logic_vector(6 downto 0) ;
     addr_1 : in std_logic_vector(6 downto 0) ;
     addr_2 : in std_logic_vector(6 downto 0) ;
@@ -33,7 +34,9 @@ begin
         variable BI :integer := 0; 
         variable BA : std_logic_vector(4 downto 0) := (others => '0');
     begin
-        if rising_edge(clk) then
+        if reset = '1' then
+            bank_addr_array <= (others => (others => '0'));
+        elsif rising_edge(clk) then
             raw_addr_array <= (addr_0, addr_1, addr_2, addr_3);
             for bank in 0 to NUM_BANKS-1 loop
                 slide_dist := (raw_addr_array(bank)(6) xor raw_addr_array(bank)(5) xor raw_addr_array(bank)(4) 

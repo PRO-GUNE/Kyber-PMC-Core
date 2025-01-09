@@ -10,6 +10,7 @@ architecture Behavioral of test_ADDR_MAP is
 
     -- DUT ports
     signal clk         : std_logic := '0';
+    signal reset       : std_logic := '0';
     signal addr_0      : std_logic_vector(6 downto 0) := (others => '0');
     signal addr_1      : std_logic_vector(6 downto 0) := (others => '0');
     signal addr_2      : std_logic_vector(6 downto 0) := (others => '0');
@@ -27,6 +28,7 @@ begin
     DUT: entity work.ADDR_MAP
         port map (
             clk => clk,
+            reset => reset,
             addr_0 => addr_0,
             addr_1 => addr_1,
             addr_2 => addr_2,
@@ -47,6 +49,11 @@ begin
     -- Test process
     test_process : process
     begin
+        reset <= '1';
+        wait for clk_period;
+        reset <= '0';
+        wait for clk_period;
+
         -- Iterate through all test cases for raw addresses 0 to 16
         for addr in 0 to 3 loop
             -- Apply test values to all input addresses

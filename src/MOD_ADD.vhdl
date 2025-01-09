@@ -53,7 +53,7 @@ begin
                 b_extended <= resize(unsigned(b), 48);
                 
                 -- Stage 3: DSP operation registers
-                temp_sum_reg <= (a_extended * mult_one) + b_extended;
+                temp_sum_reg <= a_extended + b_extended;
                 
                 -- Stage 4: Final result register with comparison
                 if temp_sum_reg >= mod_extended then
