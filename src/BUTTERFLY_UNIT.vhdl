@@ -54,19 +54,6 @@ architecture Behavioral of BUTTERFLY_UNIT is
         );
     end component;
 
-    component TWIDDLE_ROM
-        port(
-            clk : in std_logic;
-            en : in std_logic;
-            addr_00 : in std_logic_vector(6 downto 0);
-            addr_10 : in std_logic_vector(6 downto 0);
-            addr_11 : in std_logic_vector(6 downto 0);
-            data_00 : out std_logic_vector(11 downto 0);
-            data_10 : out std_logic_vector(11 downto 0);
-            data_11 : out std_logic_vector(11 downto 0)
-        );
-    end component;
-    
     -- post scaling constant
     constant half : std_logic_vector(11 downto 0) := "101011110111"; -- 2^(-1)*k^(-2) mod 3329 = 1665*2285 = 2807 
 

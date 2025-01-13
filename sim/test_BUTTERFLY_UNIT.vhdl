@@ -73,26 +73,28 @@ begin
         wait for 10 ns;
         u_in <= "000001000000"; -- 64
         v_in <= "000011000000"; -- 192
-        wait for 10 ns;
-        wait for 70 ns;
+        wait for 90 ns;
         assert u_out = "000001000000" report "Test 2 failed for u_out" severity error; -- 64
         assert v_out = "110011000001" report "Test 2 failed for v_out" severity error; -- 3265
-        wait for 10 ns;
         assert u_out = "000010000000" report "Test 1 failed for u_out" severity error; -- 128
         assert v_out = "110011000001" report "Test 1 failed for v_out" severity error; -- 3265
         
-        -- -- Test 2: u +/- vw mode 
+        -- reset
         mode <= '0';
+        reset <= '1';
+        wait for 10 ns;
+        reset <= '0';
+        wait for 10 ns;
+
+        -- -- Test 2: u +/- vw mode 
         twiddle <= "101000001011"; -- 2571 (w^64 * k^-2 mod 3329)
         u_in <= "000000000000"; -- 0
         v_in <= "000010000000"; -- 128
-        wait for 10 ns;
+        wait for 50 ns;
         u_in <= "000001000000"; -- 64
         v_in <= "000011000000"; -- 192
-        wait for 100 ns; 
         assert u_out = "011000111110" report "Test 2 failed for u_out" severity error; -- 1598
         assert v_out = "011011000011" report "Test 2 failed for v_out" severity error; -- 1731
-        wait for 100 ns;
         assert u_out = "100110011101" report "Test 3 failed for u_out" severity error; -- 2461
         assert v_out = "001111100100" report "Test 3 failed for v_out" severity error; -- 996
 

@@ -9,8 +9,11 @@ DEBUG = True
 
 
 # Function to return a value for a given address
+# A 24-bit number (6 HEX digits)
 def f(i: int) -> int:
-    return i
+    a_0 = 2 * i
+    a_1 = 2 * (i + 1)
+    return a_0 | a_1 << 12
 
 
 # Function to create conflict free address mapping for original address
@@ -44,7 +47,7 @@ debug(mem_banks)
 
 # Convert to files
 for key, values in mem_banks.items():
-    filename = f"mem_bank_{key}.coe"
+    filename = f"./imports/mem_bank_{key}.coe"
     with open(filename, "w") as file:
         # Write the header lines
         file.write("memory_initialization_radix=16;\n")

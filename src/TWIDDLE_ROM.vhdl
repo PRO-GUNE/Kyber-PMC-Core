@@ -8,12 +8,10 @@ entity TWIDDLE_ROM is
     port(
         clk : in std_logic;
         en : in std_logic;
-        addr_00 : in std_logic_vector(6 downto 0);
-        addr_10 : in std_logic_vector(6 downto 0);
-        addr_11 : in std_logic_vector(6 downto 0);
-        data_00 : out std_logic_vector(11 downto 0);
-        data_10 : out std_logic_vector(11 downto 0);
-        data_11 : out std_logic_vector(11 downto 0)
+        addr_0 : in std_logic_vector(6 downto 0);
+        addr_1 : in std_logic_vector(6 downto 0);
+        data_0 : out std_logic_vector(11 downto 0);
+        data_1 : out std_logic_vector(11 downto 0)
     );
 end TWIDDLE_ROM;
 
@@ -45,9 +43,8 @@ begin
     begin
         if rising_edge(clk) then
             if (en = '1') then
-                data_00 <= ROM(to_integer(unsigned(addr_00)));
-                data_10 <= ROM(to_integer(unsigned(addr_10)));
-                data_11 <= ROM(to_integer(unsigned(addr_11)));
+                data_0 <= ROM(to_integer(unsigned(addr_0)));
+                data_1 <= ROM(to_integer(unsigned(addr_1)));
             end if;
         end if;
     end process;

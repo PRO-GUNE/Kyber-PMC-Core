@@ -63,11 +63,18 @@ begin
     b_in <= "000000000001"; -- 1
     wait for 10 ns;
     
+    
     -- Test case 2: Multiplication of zero and a positive number
     a_in <= "000000000001"; -- 0
     b_in <= "000000000010"; -- 2
     wait for 10 ns;
     
+    -- Reset time
+    reset <= '1';
+    wait for 10 ns;
+    reset <= '0';
+    wait for 10 ns;
+
     -- Test case 3: Multiplication of two large positive numbers
     a_in <= "011111111111"; -- 2047
     b_in <= "011111111111"; -- 2047
@@ -79,6 +86,8 @@ begin
     b_in <= "101011110111"; -- 2807
     wait for 10 ns;
     assert mult = "000010101001" report "Test case 2 failed" severity error; -- 169
+
+    wait for 20 ns;
     
     wait for 10 ns;
     assert mult = "000101010010" report "Test case 3 failed" severity error; -- 338
