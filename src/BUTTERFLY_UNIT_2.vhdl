@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity BUTTERFLY_UNIT is
+entity BUTTERFLY_UNIT_2 is
     port (
         clk : in std_logic;
         mode : in std_logic_vector(1 downto 0);
@@ -15,11 +15,11 @@ entity BUTTERFLY_UNIT is
         v_out : out std_logic_vector(11 downto 0);
 
         -- debug outs
-         u_v_debug : out std_logic_vector(11 downto 0)
+        u_v_debug : out std_logic_vector(11 downto 0)
     );
-end entity BUTTERFLY_UNIT;
+end entity BUTTERFLY_UNIT_2;
 
-architecture Behavioral of BUTTERFLY_UNIT is
+architecture Behavioral of BUTTERFLY_UNIT_2 is
 
     component MOD_MUL
         port (
@@ -56,16 +56,14 @@ architecture Behavioral of BUTTERFLY_UNIT is
 
     -- post scaling constant
     constant half : std_logic_vector(11 downto 0) := "101011110111"; -- 2^(-1)*k^(-2) mod 3329 = 1665*2285 = 2807 
-    constant k4_inv : std_logic_vector(11 downto 0) := "010101001001"; -- k^(-4) mod 3329 = 1353 
 
     -- Pipeline registers
     signal reg_u1, reg_u2, reg_u3, reg_u4, reg_u5 : std_logic_vector(11 downto 0);
-    signal reg_v1, reg_v2, reg_v3, reg_v4, reg_v5 : std_logic_vector(11 downto 0);
     signal reg_add, reg_sub         : std_logic_vector(11 downto 0);
 
     -- internal signals
     signal mod_u_in, mod_v_in, add_out, sub_out : std_logic_vector(11 downto 0);
-    signal mul_u_in, mul_v_in, mul_out, scalar_out_0, scalar_out_1, scalar_in_1 : std_logic_vector(11 downto 0);
+    signal mul_u_in, mul_v_in, mul_out, scalar_out_0, scalar_out_1  : std_logic_vector(11 downto 0);   
 
 begin
 
@@ -115,7 +113,7 @@ begin
             reset => reset,
             enable => enable,
             a => reg_add,
-            b => scalar_in_1,
+            b => half,
             mult => scalar_out_1 
         );
     
@@ -138,13 +136,6 @@ begin
                 reg_u3 <= reg_u2;
                 reg_u4 <= reg_u3;
                 reg_u5 <= reg_u4;
-
-                reg_v1 <= mul_out;
-                reg_v2 <= reg_v1;
-                reg_v3 <= reg_v2;
-                reg_v4 <= reg_v3;
-                reg_v5 <= reg_v4;
-
                 reg_add <= add_out;
                 reg_sub <= sub_out;
             end if;
@@ -152,17 +143,17 @@ begin
     end process ; -- edge_triggered
     
     -- asynchronous signals
-    mod_u_in <= reg_u5 when mode="00" else u_in;
-    mod_v_in <= mul_out when mode="00" else v_in when mode="01" else reg_v5;
-    scalar_in_1 <= half when mode(1)='0' else k4_inv;
+    mod_u_in <= reg_u5 when mode(0)='0' else u_in;
+    mod_v_in <= mul_out when mode(0)='0' else v_in;
     
-    u_out <= add_out when mode="00" else scalar_out_1;
-    v_out <= sub_out when mode(0)='0' else mul_out;
+    u_out <= add_out when mode(0)='0' else scalar_out_1;
+    v_out <= sub_out when mode="00" else mul_out;
     
     mul_u_in <= twiddle when mode(0)='0' else scalar_out_0;
     mul_v_in <= v_in when mode(0)='0' else reg_sub;
 
     -- debug outputs
-    u_v_debug <= scalar_out_1;
+    u_v_debug <= sub_out;
+
 
 end Behavioral ; -- Behavioral

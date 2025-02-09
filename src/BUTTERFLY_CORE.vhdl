@@ -5,7 +5,7 @@ use IEEE.NUMERIC_STD.ALL;
 entity BUTTERFLY_CORE is
     port (
         clk      : in std_logic;
-        mode     : in std_logic;
+        mode     : in std_logic_vector(1 downto 0);
         reset    : in std_logic;
         enable   : in std_logic;
         u_in     : in std_logic_vector(47 downto 0); -- 4x 12-bit inputs
@@ -41,7 +41,7 @@ architecture Behavioral of BUTTERFLY_CORE is
     component BUTTERFLY_UNIT is
         port (
             clk      : in std_logic;
-            mode     : in std_logic;
+            mode     : in std_logic_vector(1 downto 0);
             reset    : in std_logic;
             enable   : in std_logic;
             u_in     : in std_logic_vector(11 downto 0);

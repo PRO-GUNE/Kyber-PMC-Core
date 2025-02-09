@@ -10,7 +10,7 @@ entity FSM is
     port (
         clk       : in  std_logic;  -- Clock signal
         reset     : in  std_logic;  -- Reset signal
-        mode      : in  std_logic_vector(2 downto 0); -- Input selection (000: IDLE, 001: NTT, 010: INTT, 011: PWM, 100: RD, 101: WR)
+        mode      : in  std_logic_vector(3 downto 0); -- Input selection (000: IDLE, 001: NTT0, 010: INTT0, 011: NTT1, 100: INTT1, 101: PWM, 110: RD0, 111: WR0, 1000: RD0, 1001: WR0)
         done      : out std_logic;  -- Done signal
         data_transmit  : out std_logic_vector(23 downto 0);
 
@@ -35,7 +35,7 @@ end FSM;
 
 architecture Behavioral of FSM is
     -- Define states
-    type state_type is (IDLE, NTT, INTT, PWM, RD, WR);
+    type state_type is (IDLE, NTT0, INTT0, NTT1, INTT1, PWM, RD0, WR0, RD1, WR1);
     signal current_state, next_state : state_type;
 
     signal enable_RAM, enable_BUT : std_logic := '0';
@@ -91,6 +91,7 @@ begin
         wr_en => wr_en,
         enable_BUT => enable_BUT,
         enable_RAM => enable_RAM,
+        sel_RAM => sel_RAM,
         addr_rd_0 => addr_rd_0,
         addr_rd_1 => addr_rd_1,
         addr_rd_2 => addr_rd_2,
@@ -114,12 +115,15 @@ begin
 
         elsif rising_edge(clk) then
             case mode is
-                when "000" => next_state <= IDLE;
-                when "001" => next_state <= NTT;
-                when "010" => next_state <= INTT;
-                when "011" => next_state <= PWM;
-                when "100" => next_state <= RD;
-                when "101" => next_state <= WR;
+                when "0000" => next_state <= IDLE;
+                when "0001" => next_state <= NTT0;
+                when "0010" => next_state <= INTT0;
+                when "0011" => next_state <= NTT1;
+                when "0100" => next_state <= INTT1;
+                when "0101" => next_state <= PWM;
+                when "0110" => next_state <= RD0;
+                when "1000" => next_state <= RD1;
+                when "1001" => next_state <= WR1;
                 when others => next_state <= IDLE; -- Invalid input, stay in IDLE
             end case;
                 
@@ -140,6 +144,7 @@ begin
                     l <= n/2;
                     s <= 0;
                     j <= 0;
+                    sel_RAM <= '0';
 
                     -- reset signals to multiplication core
                     rd_en <= (others => '0');
@@ -156,7 +161,7 @@ begin
                     tw_addr_1 <= (others => '0');
                     done <= '0'; -- Indicate completion
 
-                when NTT =>
+                when NTT0 =>
                     enable_BUT <= '1';
                     enable_RAM <= '1';
                     if l > 1 then
@@ -205,7 +210,7 @@ begin
                         done <= '1'; -- Indicate completion
                     end if;
 
-                when RD =>
+                when RD0 =>
                     enable_BUT <= '0';
                     enable_RAM <= '1';
                     rd_en <= "1111";

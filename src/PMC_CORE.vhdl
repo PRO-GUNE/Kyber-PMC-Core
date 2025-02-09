@@ -9,6 +9,7 @@ entity PMC_CORE is
     mode  : in  std_logic_vector(1 downto 0); -- Input selection (00: NTT, 01: INTT, 10: PWM)
     enable_BUT : in std_logic;
     enable_RAM : in std_logic;
+    sel_RAM : in std_logic;
     rd_en : in std_logic_vector(3 downto 0);
     wr_en : in std_logic_vector(3 downto 0);
     addr_rd_0 : in std_logic_vector(6 downto 0);
@@ -27,13 +28,23 @@ end PMC_CORE ;
 
 architecture Behavioral of PMC_CORE is
 
-    -- RAM read addresses
+    -- ADDR MAP signal
     signal rd_addr_0, rd_addr_1, rd_addr_2, rd_addr_3 : std_logic_vector(4 downto 0);
-    signal rd_data_0, rd_data_1, rd_data_2, rd_data_3 : std_logic_vector(23 downto 0);
+    signal rd_data_0, rd_data_1, rd_data_2, rd_data_3_0 : std_logic_vector(23 downto 0);
+    signal wr_addr_0, wr_addr_0, wr_ad_2_0, wr_dr_3_0 : std_logic_vector(4 downto 0);
+    signal wr_data_0, wr_data_0, wr_da_2_0, wr_data_3_0 : std_logic_vector(23 downto 0);
     
-    -- RAM write addresses
-    signal wr_addr_0, wr_addr_1, wr_addr_2, wr_addr_3 : std_logic_vector(4 downto 0);
-    signal wr_data_0, wr_data_1, wr_data_2, wr_data_3 : std_logic_vector(23 downto 0);
+    -- RAM 0 read/write addresses
+    signal rd_addr_0_0, rd_addr_1_0, rd_addr_2_0, rd_addr_3_0 : std_logic_vector(4 downto 0);
+    signal rd_data_0_0, rd_data_1_0, rd_data_2_0, rd_data_3_0 : std_logic_vector(23 downto 0);
+    signal wr_addr_0_0, wr_addr_1_0, wr_addr_2_0, wr_addr_3_0 : std_logic_vector(4 downto 0);
+    signal wr_data_0_0, wr_data_1_0, wr_data_2_0, wr_data_3_0 : std_logic_vector(23 downto 0);
+
+    -- RAM 0 read/write addresses
+    signal rd_addr_0_1, rd_addr_1_1, rd_addr_2_1, rd_addr_3_1 : std_logic_vector(4 downto 0);
+    signal rd_data_0_1, rd_data_1_1, rd_data_2_1, rd_data_3_1 : std_logic_vector(23 downto 0);
+    signal wr_addr_0_1, wr_addr_1_1, wr_addr_2_1, wr_addr_3_1 : std_logic_vector(4 downto 0);
+    signal wr_data_0_1, wr_data_1_1, wr_data_2_1, wr_data_3_1 : std_logic_vector(23 downto 0);
 
     -- Internal signals
     signal u_in_internal, v_in_internal : std_logic_vector(47 downto 0) := (others => '0');
@@ -43,18 +54,18 @@ architecture Behavioral of PMC_CORE is
     signal wr_addr_buf_in, wr_addr_buf_out : std_logic_vector(27 downto 0) := (others => '0');
 
     -- 4x1 Butterfly Core
-    component BUTTERFLY_CORE is
+    component ASYM_BUT_CORE is
         port (
-            clk      : in std_logic;
-            mode     : in std_logic;
-            reset    : in std_logic;
-            enable   : in std_logic;
-            u_in     : in std_logic_vector(47 downto 0); -- 4x 12-bit inputs
-            v_in     : in std_logic_vector(47 downto 0); -- 4x 12-bit inputs
-            tw_addr_0 : in std_logic_vector(6 downto 0); -- twiddle addr_0
-            tw_addr_1 : in std_logic_vector(6 downto 0); -- twiddle addr_1
-            u_out    : out std_logic_vector(47 downto 0); -- 4x 12-bit outputs
-            v_out    : out std_logic_vector(47 downto 0) -- 4x 12-bit outputs
+              clk      : in std_logic;
+              mode     : in std_logic_vector(1 downto 0);
+              reset    : in std_logic;
+              enable   : in std_logic;
+              u_in     : in std_logic_vector(47 downto 0); -- 4x 12-bit inputs
+              v_in     : in std_logic_vector(47 downto 0); -- 4x 12-bit inputs
+              tw_addr_0 : in std_logic_vector(6 downto 0); -- twiddle addr_0
+              tw_addr_1 : in std_logic_vector(6 downto 0); -- twiddle addr_1
+              u_out    : out std_logic_vector(47 downto 0); -- 4x 12-bit outputs
+              v_out    : out std_logic_vector(47 downto 0) -- 4x 12-bit outputs
         );
     end component;
 
@@ -114,7 +125,7 @@ architecture Behavioral of PMC_CORE is
             clk     : in  std_logic;
             reset     : in  std_logic;
             enable  : in  std_logic;
-            mode : in std_logic;
+            mode : in std_logic_vector(1 downto 0);
             data_in : in  std_logic_vector(data_width-1 downto 0);
             data_out   : out std_logic_vector(data_width-1 downto 0)
         );
@@ -131,16 +142,16 @@ begin
         clk => clk,
         reset => reset,
         enable => '1',
-        mode => mode(0),
+        mode => mode,
         data_in => wr_addr_buf_in,
         data_out => wr_addr_buf_out
     );
 
     -- 4x1 butterfly unit
-    BUT_CORE : BUTTERFLY_CORE
+    BUT_CORE : ASYM_BUT_CORE
     port map(
         clk => clk,
-        mode => mode(0),
+        mode => mode,
         reset => reset,
         enable => enable_BUT,
         u_in => u_in_internal,
@@ -188,23 +199,49 @@ begin
         rst => reset, 
         enable => enable_RAM,
         wr_en => wr_en,
-        wr_addr_0 => wr_addr_0,
-        wr_addr_1 => wr_addr_1,
-        wr_addr_2 => wr_addr_2,
-        wr_addr_3 => wr_addr_3,
-        wr_data_0 => wr_data_0,
-        wr_data_1 => wr_data_1,
-        wr_data_2 => wr_data_2,
-        wr_data_3 => wr_data_3,
+        wr_addr_0 => wr_addr_0_0,
+        wr_addr_1 => wr_addr_1_0,
+        wr_addr_2 => wr_addr_2_0,
+        wr_addr_3 => wr_addr_3_0,
+        wr_data_0 => wr_data_0_0,
+        wr_data_1 => wr_data_1_0,
+        wr_data_2 => wr_data_2_0,
+        wr_data_3 => wr_data_3_0,
         rd_en => rd_en,
-        rd_addr_0 => rd_addr_0,
-        rd_addr_1 => rd_addr_1,
-        rd_addr_2 => rd_addr_2,
-        rd_addr_3 => rd_addr_3,
-        rd_data_0 => rd_data_0,
-        rd_data_1 => rd_data_1,
-        rd_data_2 => rd_data_2,
-        rd_data_3 => rd_data_3
+        rd_addr_0 => rd_addr_0_0,
+        rd_addr_1 => rd_addr_1_0,
+        rd_addr_2 => rd_addr_2_0,
+        rd_addr_3 => rd_addr_3_0,
+        rd_data_0 => rd_data_0_0,
+        rd_data_1 => rd_data_1_0,
+        rd_data_2 => rd_data_2_0,
+        rd_data_3 => rd_data_3_0
+    );
+
+    -- RAM
+    RAM_1 : RAM
+    port map(
+        clk => clk,
+        rst => reset, 
+        enable => enable_RAM,
+        wr_en => wr_en,
+        wr_addr_0 => wr_addr_0_1,
+        wr_addr_1 => wr_addr_1_1,
+        wr_addr_2 => wr_addr_2_1,
+        wr_addr_3 => wr_addr_3_1,
+        wr_data_0 => wr_data_0_1,
+        wr_data_1 => wr_data_1_1,
+        wr_data_2 => wr_data_2_1,
+        wr_data_3 => wr_data_3_1,
+        rd_en => rd_en,
+        rd_addr_0 => rd_addr_0_1,
+        rd_addr_1 => rd_addr_1_1,
+        rd_addr_2 => rd_addr_2_1,
+        rd_addr_3 => rd_addr_3_1,
+        rd_data_0 => rd_data_0_1,
+        rd_data_1 => rd_data_1_1,
+        rd_data_2 => rd_data_2_1,
+        rd_data_3 => rd_data_3_1
     );
 
     u_in_internal <= rd_data_1 & rd_data_0;

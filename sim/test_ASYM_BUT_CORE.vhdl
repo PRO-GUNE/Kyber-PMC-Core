@@ -2,13 +2,13 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 
-entity test_BUTTERFLY_CORE is
-end entity test_BUTTERFLY_CORE;
+entity test_ASYM_BUT_CORE is
+end entity test_ASYM_BUT_CORE;
 
-architecture testbench of test_BUTTERFLY_CORE is
+architecture testbench of test_ASYM_BUT_CORE is
 
-    -- Component declaration for BUTTERFLY_CORE
-    component BUTTERFLY_CORE
+    -- Component declaration for ASYM_BUT_CORE
+    component ASYM_BUT_CORE
         port (
             clk       : in std_logic;
             mode      : in std_logic_vector(1 downto 0);
@@ -21,7 +21,6 @@ architecture testbench of test_BUTTERFLY_CORE is
             u_out     : out std_logic_vector(47 downto 0); -- 4x 12-bit outputs
             v_out     : out std_logic_vector(47 downto 0); -- 4x 12-bit outputs
 
-            debug_out : out std_logic_vector(47 downto 0); -- Debug outputs
             u0        : out std_logic_vector(11 downto 0);
             u1        : out std_logic_vector(11 downto 0);
             u2        : out std_logic_vector(11 downto 0);
@@ -29,9 +28,12 @@ architecture testbench of test_BUTTERFLY_CORE is
             v0        : out std_logic_vector(11 downto 0);
             v1        : out std_logic_vector(11 downto 0);
             v2        : out std_logic_vector(11 downto 0);
-            v3        : out std_logic_vector(11 downto 0)
+            v3        : out std_logic_vector(11 downto 0);
+            tw_0_out  : out std_logic_vector(11 downto 0);
+            tw_1_out  : out std_logic_vector(11 downto 0);
+            u_v_debug  : out std_logic_vector(11 downto 0)
         );
-    end component BUTTERFLY_CORE;
+    end component ASYM_BUT_CORE;
 
     -- Testbench signals
     signal clk       : std_logic := '0';
@@ -44,7 +46,6 @@ architecture testbench of test_BUTTERFLY_CORE is
     signal tw_addr_1 : std_logic_vector(6 downto 0) := (others => '0');
     signal u_out     : std_logic_vector(47 downto 0);
     signal v_out     : std_logic_vector(47 downto 0);
-    signal debug_out : std_logic_vector(47 downto 0);
 
     signal u0        : std_logic_vector(11 downto 0);
     signal u1        : std_logic_vector(11 downto 0);
@@ -54,11 +55,12 @@ architecture testbench of test_BUTTERFLY_CORE is
     signal v1        : std_logic_vector(11 downto 0);
     signal v2        : std_logic_vector(11 downto 0);
     signal v3        : std_logic_vector(11 downto 0);
+    signal tw_0, tw_1, u_v_debug: std_logic_vector(11 downto 0);
 
 begin
 
-    -- Instantiate the BUTTERFLY_CORE
-    dut: BUTTERFLY_CORE
+    -- Instantiate the ASYM_BUT_CORE
+    dut: ASYM_BUT_CORE
         port map (
             clk       => clk,
             mode      => mode,
@@ -70,7 +72,6 @@ begin
             tw_addr_1 => tw_addr_1,
             u_out     => u_out,
             v_out     => v_out,
-            debug_out => debug_out,
             u0 => u0,
             u1 => u1,
             u2 => u2,
@@ -78,7 +79,10 @@ begin
             v0 => v0,
             v1 => v1,
             v2 => v2,
-            v3 => v3
+            v3 => v3,
+            tw_0_out => tw_0,
+            tw_1_out => tw_1,
+            u_v_debug => u_v_debug
         );
 
     -- Clock generation
@@ -98,12 +102,12 @@ begin
         wait for 10 ns;
 
         -- Test 1: Add/Sub mode (mode = '1')
-        mode <= "10";
+        mode <= "01";
         tw_addr_0 <= "0000000"; -- Twiddle address for first set
         tw_addr_1 <= "0000000"; -- Twiddle address for second set
         u_in <= "000100000000" & "000010000000" & "000001000000" & "000000000000"; -- 4x u_in
         v_in <= "000110000000" & "000100000000" & "000011000000" & "000010000000"; -- 4x v_in
-        wait for 90 ns;
+        wait for 100 ns;
 
         -- Verify outputs (example assertions, expected values need updating based on logic)
         assert u_out(11 downto 0) = "000010000000" report "Test 1 failed for u_out[0]" severity error;
@@ -126,12 +130,12 @@ begin
         
         -- Test 2: u +/- vw mode (mode = '0')
         mode <= "00";
-        wait for 40 ns;
+        wait for 20 ns;
         tw_addr_0 <= "0000001"; -- Twiddle address for first set
         tw_addr_1 <= "0000001"; -- Twiddle address for second set
         u_in <= "000000001000" & "000000000100" & "000000000010" & "000000000000"; -- 4x u_in
         v_in <= "000010001000" & "000010000100" & "000010000010" & "000010000000"; -- 4x v_in
-        wait for 20 ns;
+        wait for 100 ns;
 
         assert u_out(11 downto 0) = "000010000000" report "Test 1 failed for u_out[0]" severity error; -- 1598
         assert v_out(11 downto 0) = "110011000001" report "Test 1 failed for v_out[0]" severity error; -- 1731
@@ -144,6 +148,25 @@ begin
 
         assert u_out(47 downto 36) = "011111001001" report "Test 1 failed for u_out[3]" severity error; -- 1993
         assert v_out(47 downto 36) = "010101001000" report "Test 1 failed for v_out[3]" severity error; -- 1352
+
+        -- Apply reset
+        reset <= '1';
+        wait for 10 ns;
+        reset <= '0';
+        wait for 10 ns;
+        
+        -- Test 3: PWM
+        mode <= "10";
+        wait for 20 ns;
+        tw_addr_0 <= "0000000"; -- Twiddle address for first set
+        tw_addr_1 <= "0000000"; -- Twiddle address for second set
+        u_in <= "000000000000" & "000000000000" & "000000000010" & "000000000001"; -- a_2i+1 | a_2i
+        v_in <= "000000000000" & "000000000000" & "000010000010" & "000010000000"; -- b_2i+1 | b_2i
+        wait for 100 ns;
+
+        assert u_out(11 downto 0) = "000110001000" report "Test 1 failed for u_out[0]" severity error; -- 392
+        assert u_out(23 downto 12) = "000110000100" report "Test 1 failed for u_out[1]" severity error; -- 388
+
 
         -- End simulation
         wait;
