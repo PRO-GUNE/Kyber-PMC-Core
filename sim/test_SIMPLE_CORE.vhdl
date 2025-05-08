@@ -12,6 +12,7 @@ architecture TB of SIMPLE_CORE_TB is
     component SIMPLE_CORE
         port (
             clk   : in std_logic;
+            mode  : in std_logic_vector(1 downto 0);
             reset : in std_logic;
             deb_addr: out std_logic_vector(6 downto 0)
         );
@@ -20,6 +21,7 @@ architecture TB of SIMPLE_CORE_TB is
     -- Signals for the testbench
     signal clk   : std_logic := '0';
     signal reset : std_logic := '0';
+    signal mode : std_logic_vector(1 downto 0) := (others => '0');
     signal addr_0 : std_logic_vector(6 downto 0);
 
 begin
@@ -28,6 +30,7 @@ begin
     DUT : SIMPLE_CORE
         port map (
             clk   => clk,
+            mode => mode,
             reset => reset,
             deb_addr => addr_0
         );
@@ -43,8 +46,10 @@ begin
     test_process : process
     begin
         reset <= '1';
-        wait for 50 ns;
+        mode <= "11";
+        wait for 60 ns;
         reset <= '0';
+        mode <= "00";
         wait for 5 ns;
         wait;
     end process;

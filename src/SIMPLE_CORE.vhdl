@@ -259,7 +259,7 @@ begin
                             s := 0;
                             l := l / 2;
                         end if;
-
+                    else
                         next_state <= IDLE;
                     end if;
 
@@ -301,6 +301,7 @@ begin
                             l := l / 2;
                         end if;
 
+                    else
                         next_state <= IDLE;
                     end if;
                 
