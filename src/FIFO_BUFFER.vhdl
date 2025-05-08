@@ -4,8 +4,8 @@ use ieee.numeric_std.all;
 
 entity FIFO_BUFFER is
     generic (
-        n : positive := 18;           -- Number of stages
-        data_width : positive := 28   -- Width of data bus (4*wr_addr width)
+        n : positive := 8;           -- Number of stages
+        data_width : positive := 20   -- Width of data bus (4*wr_addr width)
     );
     port (
         clk     : in  std_logic;
@@ -22,7 +22,7 @@ architecture rtl of FIFO_BUFFER is
     type fifo_array is array (0 to n-1) of std_logic_vector(data_width-1 downto 0);
     signal fifo_stages : fifo_array;
 
-    signal out_8, out_n : std_logic_vector(data_width-1 downto 0);
+    signal out_8, out_n, out_n_1 : std_logic_vector(data_width-1 downto 0);
     
 begin
     -- FIFO shifting process
@@ -49,12 +49,12 @@ begin
     
     -- Output assignments
     out_n   <= fifo_stages(n-1);     -- nth stage output
-    out_n_1 <= fifo_stages(n-10);     -- (n-1)th stage output
+    out_n_1 <= fifo_stages(n-2);     -- (n-1)th stage output
 
     data_out <= out_n_1 when mode(1)='0' else out_n;
  
     -- Assert to ensure n is at least 2 (needed for n-1 output)
-    assert n >= 10 
+    assert n >= 2 
         report "FIFO depth must be at least 2 stages for n and n-1 outputs"
         severity error;
         

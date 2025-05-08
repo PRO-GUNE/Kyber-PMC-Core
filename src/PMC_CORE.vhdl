@@ -31,8 +31,8 @@ architecture Behavioral of PMC_CORE is
     -- ADDR MAP signal
     signal rd_addr_0, rd_addr_1, rd_addr_2, rd_addr_3 : std_logic_vector(4 downto 0);
     signal rd_data_0, rd_data_1, rd_data_2, rd_data_3_0 : std_logic_vector(23 downto 0);
-    signal wr_addr_0, wr_addr_0, wr_ad_2_0, wr_dr_3_0 : std_logic_vector(4 downto 0);
-    signal wr_data_0, wr_data_0, wr_da_2_0, wr_data_3_0 : std_logic_vector(23 downto 0);
+    signal wr_addr_0, wr_addr_1, wr_ad_2_0, wr_dr_3_0 : std_logic_vector(4 downto 0);
+    signal wr_data_0, wr_data_1, wr_da_2_0, wr_data_3_0 : std_logic_vector(23 downto 0);
     
     -- RAM 0 read/write addresses
     signal rd_addr_0_0, rd_addr_1_0, rd_addr_2_0, rd_addr_3_0 : std_logic_vector(4 downto 0);
@@ -40,7 +40,7 @@ architecture Behavioral of PMC_CORE is
     signal wr_addr_0_0, wr_addr_1_0, wr_addr_2_0, wr_addr_3_0 : std_logic_vector(4 downto 0);
     signal wr_data_0_0, wr_data_1_0, wr_data_2_0, wr_data_3_0 : std_logic_vector(23 downto 0);
 
-    -- RAM 0 read/write addresses
+    -- RAM 1 read/write addresses
     signal rd_addr_0_1, rd_addr_1_1, rd_addr_2_1, rd_addr_3_1 : std_logic_vector(4 downto 0);
     signal rd_data_0_1, rd_data_1_1, rd_data_2_1, rd_data_3_1 : std_logic_vector(23 downto 0);
     signal wr_addr_0_1, wr_addr_1_1, wr_addr_2_1, wr_addr_3_1 : std_logic_vector(4 downto 0);
@@ -119,7 +119,7 @@ architecture Behavioral of PMC_CORE is
     component FIFO_BUFFER is
         generic (
             n : positive := 8;           -- Number of stages
-            data_width : positive := 28   -- Width of data bus (4*wr_addr width)
+            data_width : positive := 20   -- Width of data bus (4*wr_addr width)
         );
         port (
             clk     : in  std_logic;
@@ -136,7 +136,7 @@ begin
     FIFO_0 : FIFO_BUFFER
     generic map(
         n => 8,
-        data_width => 28
+        data_width => 20
     )
     port map(
         clk => clk,

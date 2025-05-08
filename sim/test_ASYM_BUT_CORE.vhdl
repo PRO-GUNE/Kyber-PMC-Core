@@ -146,8 +146,8 @@ begin
         assert u_out(35 downto 24) = "011101000100" report "Test 1 failed for u_out[2]" severity error; -- 1860
         assert v_out(35 downto 24) = "010111000101" report "Test 1 failed for v_out[2]" severity error; -- 1477
 
-        assert u_out(47 downto 36) = "011111001001" report "Test 1 failed for u_out[3]" severity error; -- 1993
-        assert v_out(47 downto 36) = "010101001000" report "Test 1 failed for v_out[3]" severity error; -- 1352
+        assert u_out(47 downto 36) = "011111001001" report "Test 1 failed for u_out[3]" severity error; -- 2122
+        assert v_out(47 downto 36) = "010101001000" report "Test 1 failed for v_out[3]" severity error; -- 1223
 
         -- Apply reset
         reset <= '1';
