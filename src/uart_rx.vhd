@@ -24,8 +24,8 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity uart_rx is
     generic (
-        CLK_FREQ    : integer ;  -- 100 MHz clock
-        BAUD_RATE   : integer      -- Baud rate
+        CLK_FREQ    : integer := 100000000;  -- 100 MHz clock
+        BAUD_RATE   : integer := 115200      -- Baud rate
     );
     port (
         clk         : in  std_logic;

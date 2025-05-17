@@ -45,26 +45,6 @@ architecture Behavioral of SIMPLE_CORE is
 
   constant UART_SYN_TIME : integer := 96; -- UART sync time in clock cycles
 
-  component BUFFERED_UART is
-    port (
-      clk        : in  std_logic;
-      rst        : in  std_logic;
-      rx         : in  std_logic; -- UART receive line
-      tx         : out std_logic; -- UART transmit line
-      ram_data0  : in  std_logic_vector(23 downto 0); -- Data from RAM (word 0)
-      ram_data1  : in  std_logic_vector(23 downto 0); -- Data from RAM (word 1)
-      ram_data2  : in  std_logic_vector(23 downto 0); -- Data from RAM (word 2)
-      ram_data3  : in  std_logic_vector(23 downto 0); -- Data from RAM (word 3)
-      ram_valid  : in  std_logic; -- Valid signal for RAM data
-      ram_ready  : out std_logic; -- Ready signal for RAM
-      uart_data0 : out std_logic_vector(23 downto 0); -- Data to RAM (word 0)
-      uart_data1 : out std_logic_vector(23 downto 0); -- Data to RAM (word 1)
-      uart_data2 : out std_logic_vector(23 downto 0); -- Data to RAM (word 2)
-      uart_data3 : out std_logic_vector(23 downto 0); -- Data to RAM (word 3)
-      uart_valid : out std_logic -- Valid signal for UART data
-    );
-  end component;
-
   -- 4x1 Butterfly Core
   component ASYM_BUT_CORE is
     port (
@@ -142,28 +122,65 @@ architecture Behavioral of SIMPLE_CORE is
       data_out : out std_logic_vector(data_width - 1 downto 0)
     );
   end component;
-begin
+  
+  component uart_rx is
+    generic (
+      CLK_FREQ    : integer ;  -- 100 MHz clock
+      BAUD_RATE   : integer      -- Baud rate
+    );
+    port (
+      clk         : in  std_logic;
+      rst         : in  std_logic;
+      rx          : in  std_logic;
+      data_out    : out std_logic_vector(7 downto 0);
+      data_valid  : out std_logic
+    );
+  end component;
 
-  -- Instantiate the buffered UART
-  UART_0 : BUFFERED_UART
-  port map
-  (
-    clk        => clk,
-    rst        => reset,
-    rx         => rx_in,
-    tx         => tx_out,
-    ram_data0  => rd_data_0,
-    ram_data1  => rd_data_1,
-    ram_data2  => rd_data_2,
-    ram_data3  => rd_data_3,
-    ram_valid  => '1',
-    ram_ready  => ram_ready,
-    uart_data0 => wr_data_0,
-    uart_data1 => wr_data_1,
-    uart_data2 => wr_data_2,
-    uart_data3 => wr_data_3,
-    uart_valid  => uart_valid
-  );
+  component uart_tx is
+    generic (
+      CLK_FREQ    : integer ;  -- 100 MHz clock
+      BAUD_RATE   : integer      -- Baud rate
+    );
+    port (
+      clk         : in  std_logic;
+      rst         : in  std_logic;
+      tx          : out std_logic;
+      data_in     : in  std_logic_vector(7 downto 0);
+      data_valid   : in std_logic
+    );
+  end component;
+
+  component serial_buf_rx is
+    port (
+      clk         : in  std_logic;
+      rst         : in  std_logic;
+      data_in     : in  std_logic_vector(7 downto 0);
+      data_valid   : in std_logic;
+      buf_full     : out std_logic;
+      data_out_0   : out std_logic_vector(23 downto 0);
+      data_out_1   : out std_logic_vector(23 downto 0); 
+      data_out_2   : out std_logic_vector(23 downto 0); 
+      data_out_3   : out std_logic_vector(23 downto 0) 
+    );
+  end component;
+
+  component serial_buf_tx is
+    port (
+      clk         : in  std_logic;
+      rst         : in  std_logic;
+      data_in     : in  std_logic_vector(7 downto 0);
+      data_valid   : in std_logic;
+      buf_full     : out std_logic;
+      data_out_0   : out std_logic_vector(23 downto 0);
+      data_out_1   : out std_logic_vector(23 downto 0); 
+      data_out_2   : out std_logic_vector(23 downto 0); 
+      data_out_3   : out std_logic_vector(23 downto 0) 
+    );
+  end component;
+  
+
+begin
 
   -- FIFO Buffer
   FIFO_0 : FIFO_BUFFER
@@ -291,6 +308,8 @@ begin
     rd_data_3 => rd_data_3
   );
 
+  -- Process
+  NTT_PROCESS : 
   process (clk)
     variable k : integer := 0;
     variable l : integer := 64; -- Assuming n = 128, so n/2 = 64
