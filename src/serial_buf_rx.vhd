@@ -53,7 +53,15 @@ architecture Behavioral of serial_buf_rx is
 begin
     process (clk)
     begin
-      if rising_edge(clk) then
+      if rst = '1' then
+            buff <= (others => (others => '0'));
+            count <= 0;
+            full <= '0';
+            data_out_0 <= (others => '0');
+            data_out_1 <= (others => '0');
+            data_out_2 <= (others => '0');
+            data_out_3 <= (others => '0');
+      elsif rising_edge(clk) then
         if rst = '1' then
             buff <= (others => (others => '0'));
             count <= 0;

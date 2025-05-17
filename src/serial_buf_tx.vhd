@@ -59,6 +59,7 @@ begin
             buff <= (others => (others => '0'));
             count <= 0;
             ready <= '0';
+            data_out <= (others => '0');
         elsif rising_edge(clk) then
             if data_valid = '1' and count = 0 and ready = '0' then
                 -- Split 24-bit inputs into 8-bit chunks and store in buffer

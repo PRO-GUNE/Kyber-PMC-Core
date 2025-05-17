@@ -23,20 +23,7 @@ uart = serial.Serial(
     timeout=1,
 )
 
-byte_array = [
-    4,
-    5,
-    6,
-    7,
-    8,
-    9,
-    10,
-    11,
-    12,
-    1,
-    2,
-    3,
-]
+byte_array = [i + 1 for i in range(numbers)]
 
 uart.write(bytes(byte_array))
 print(f"Sent {len(byte_array)} bytes to FPGA.")
