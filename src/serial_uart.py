@@ -12,7 +12,7 @@ import serial
 
 starttime = time.monotonic()
 
-numbers = 24
+numbers = 12
 
 uart = serial.Serial(
     port="COM11",

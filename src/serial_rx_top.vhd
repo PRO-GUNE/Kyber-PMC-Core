@@ -32,7 +32,6 @@ entity serial_rx_top is
     rst : in std_logic;
     rx  : in std_logic; -- Serial RX input
     tx  : out std_logic; -- Serial TX output
-    valid : out std_logic;
     led : out std_logic_vector(7 downto 0) -- LED output for debugging
   );
 end serial_rx_top;
@@ -96,18 +95,53 @@ architecture Behavioral of serial_rx_top is
      data_out  : out std_logic_vector(7 downto 0) -- First 24-bit value
    );
   end component;
+  
+  component RAM
+    port (
+      clk    : in std_logic;
+      rst    : in std_logic;
+      enable : in std_logic;
+      -- Write ports - independent for each bank
+      wr_en     : in std_logic_vector(3 downto 0); -- Write enable for each bank
+      wr_addr_0 : in std_logic_vector(4 downto 0); -- Write address for bank 0
+      wr_addr_1 : in std_logic_vector(4 downto 0); -- Write address for bank 1
+      wr_addr_2 : in std_logic_vector(4 downto 0); -- Write address for bank 2
+      wr_addr_3 : in std_logic_vector(4 downto 0); -- Write address for bank 3
+      wr_data_0 : in std_logic_vector(23 downto 0); -- Write data for bank 0
+      wr_data_1 : in std_logic_vector(23 downto 0); -- Write data for bank 1
+      wr_data_2 : in std_logic_vector(23 downto 0); -- Write data for bank 2
+      wr_data_3 : in std_logic_vector(23 downto 0); -- Write data for bank 3
+
+      -- Read ports - independent for each bank
+      rd_en     : in std_logic_vector(3 downto 0); -- Read enable for each bank
+      rd_addr_0 : in std_logic_vector(4 downto 0); -- Read address for bank 0
+      rd_addr_1 : in std_logic_vector(4 downto 0); -- Read address for bank 1
+      rd_addr_2 : in std_logic_vector(4 downto 0); -- Read address for bank 2
+      rd_addr_3 : in std_logic_vector(4 downto 0); -- Read address for bank 3
+      rd_data_0 : out std_logic_vector(23 downto 0); -- Read data from bank 0
+      rd_data_1 : out std_logic_vector(23 downto 0); -- Read data from bank 1
+      rd_data_2 : out std_logic_vector(23 downto 0); -- Read data from bank 2
+      rd_data_3 : out std_logic_vector(23 downto 0) -- Read data from bank 3
+    );
+  end component;
 
   -- Signal declarations
   signal rx_data       : std_logic_vector(7 downto 0);
   signal rx_data_valid : std_logic;
-  signal rx_data_out_0, rx_data_out_1, rx_data_out_2, rx_data_out_3 : std_logic_vector(23 downto 0);
   signal busy : std_logic := '1';
   signal data_send : std_logic := '1'; 
   signal tx_data    : std_logic_vector(7 downto 0);
   signal buf_full   : std_logic := '0';
-  signal sent       : std_logic;
   
+  signal rd_addr_0, rd_addr_1, rd_addr_2, rd_addr_3 : std_logic_vector(4 downto 0) := (others => '0');
+  signal rd_data_0, rd_data_1, rd_data_2, rd_data_3 : std_logic_vector(23 downto 0);
+  signal wr_addr_0, wr_addr_1, wr_addr_2, wr_addr_3 : std_logic_vector(4 downto 0) := (others => '0');
+  signal wr_data_0, wr_data_1, wr_data_2, wr_data_3 : std_logic_vector(23 downto 0);
+  signal wr_en, rd_en                               : std_logic_vector(3 downto 0) := "1111";
+  signal read_valid : std_logic := '1';
 begin
+  -- instantiate the RAM
+  
   -- Instantiate the serial interface
   uart_rx_inst : uart_rx
   generic map(
@@ -146,10 +180,10 @@ begin
     data_in => rx_data,
     data_valid => rx_data_valid,
     buf_full => buf_full,
-    data_out_0 => rx_data_out_0,
-    data_out_1 => rx_data_out_1,
-    data_out_2 => rx_data_out_2,
-    data_out_3 => rx_data_out_3
+    data_out_0 => wr_data_0,
+    data_out_1 => wr_data_1,
+    data_out_2 => wr_data_2,
+    data_out_3 => wr_data_3
   );
   
   serial_buf_tx_inst : serial_buf_tx
@@ -157,17 +191,42 @@ begin
     clk => clk,
     rst => rst,
     busy => busy,
-    data_in_0 => rx_data_out_0,
-    data_in_1 => rx_data_out_1,
-    data_in_2 => rx_data_out_2,
-    data_in_3 => rx_data_out_3,
-    data_valid => buf_full,
+    data_in_0 => rd_data_0,
+    data_in_1 => rd_data_1,
+    data_in_2 => rd_data_2,
+    data_in_3 => rd_data_3,
+    data_valid => read_valid,
     data_send => data_send,
     data_out => tx_data
   );
   
+  -- RAM
+  RAM_0 : RAM
+  port map
+  (
+    clk       => clk,
+    rst       => rst,
+    enable    => '1',
+    wr_en     => wr_en,
+    wr_addr_0 => wr_addr_0,
+    wr_addr_1 => wr_addr_1,
+    wr_addr_2 => wr_addr_2,
+    wr_addr_3 => wr_addr_3,
+    wr_data_0 => wr_data_0,
+    wr_data_1 => wr_data_1,
+    wr_data_2 => wr_data_2,
+    wr_data_3 => wr_data_3,
+    rd_en     => rd_en,
+    rd_addr_0 => rd_addr_0,
+    rd_addr_1 => rd_addr_1,
+    rd_addr_2 => rd_addr_2,
+    rd_addr_3 => rd_addr_3,
+    rd_data_0 => rd_data_0,
+    rd_data_1 => rd_data_1,
+    rd_data_2 => rd_data_2,
+    rd_data_3 => rd_data_3
+  );
+  
   -- LED output logic
   led <= tx_data; -- Output received data to LEDs
-  valid <= sent;
-
 end Behavioral;
