@@ -23,7 +23,7 @@ uart = serial.Serial(
     timeout=1,
 )
 
-byte_array = [i + 1 for i in range(numbers)]
+byte_array = [i + 6 for i in range(numbers)]
 
 uart.write(bytes(byte_array))
 print(f"Sent {len(byte_array)} bytes to FPGA.")
@@ -33,7 +33,8 @@ while not uart.in_waiting:
 
 # Read response
 if uart.in_waiting:
-    response = uart.read(len(byte_array) + 1)
+    print(uart.in_waiting)
+    response = uart.read(uart.in_waiting)
     values = [
         int(response.hex()[i : i + 2], 16) for i in range(0, len(response.hex()), 2)
     ]
