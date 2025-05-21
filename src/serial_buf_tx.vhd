@@ -1,91 +1,88 @@
-----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date: 05/15/2025 11:24:40 AM
--- Design Name: 
--- Module Name: serial_buf_tx - Behavioral
--- Project Name: 
--- Target Devices: 
--- Tool Versions: 
--- Description: 
--- 
--- Dependencies: 
--- 
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
--- 
-----------------------------------------------------------------------------------
-
-
 library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_1164.all;
+use IEEE.NUMERIC_STD.all;
 
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
---use IEEE.NUMERIC_STD.ALL;
+entity uart_tx_buffer is
+  generic (
+    CLK_FREQ  : integer := 100_000_000; -- Default 100 MHz
+    BAUD_RATE : integer := 115_200      -- Default baud rate
+  );
+  port (
+    clk        : in std_logic;
+    rst        : in std_logic;
+    busy       : in std_logic;                     -- Busy signal from uart_tx
+    data_in_0  : in std_logic_vector(23 downto 0); -- First 24-bit input
+    data_in_1  : in std_logic_vector(23 downto 0); -- Second 24-bit input
+    data_in_2  : in std_logic_vector(23 downto 0); -- Third 24-bit input
+    data_in_3  : in std_logic_vector(23 downto 0); -- Fourth 24-bit input
+    data_valid : in std_logic;                     -- Signal to latch input data
+    data_send  : out std_logic;                    -- Signal to start uart_tx transmission
+    data_out   : out std_logic_vector(7 downto 0)  -- Byte to transmit
+  );
+end uart_tx_buffer;
 
--- Uncomment the following library declaration if instantiating
--- any Xilinx leaf cells in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
+architecture Behavioral of uart_tx_buffer is
+  -- Internal buffer to store 4 * 24 bits = 96 bits (12 bytes)
+  signal buff : std_logic_vector(95 downto 0) := (others => '0');
 
-entity serial_buf_tx is
- Port (
-     clk       : in std_logic;
-     rst       : in std_logic;
-     busy      : in std_logic;
-     data_in_0 : in std_logic_vector(23 downto 0);
-     data_in_1 : in std_logic_vector(23 downto 0);
-     data_in_2 : in std_logic_vector(23 downto 0);
-     data_in_3 : in std_logic_vector(23 downto 0);
-     data_valid: in std_logic;
-     data_send : out std_logic;
-     data_out  : out std_logic_vector(7 downto 0) -- First 24-bit value
-   );
-end serial_buf_tx;
+  -- State machine states
+  type state_type is (IDLE, LOAD_BUFFER, SEND_BYTE, WAIT_BUSY);
+  signal state : state_type := IDLE;
 
-architecture Behavioral of serial_buf_tx is
-    type buffer_type is array (0 to 11) of STD_LOGIC_VECTOR(7 downto 0);
-    signal buff : buffer_type := (others => (others => '0'));
-    signal count : integer range 0 to 12 := 0;
-    signal ready : STD_LOGIC := '0';
+  -- Internal signals
+  signal byte_counter : integer range 0 to 11 := 0; -- Tracks current byte index
+  signal data_send_int : std_logic := '0';         -- Internal data_send signal
+
 begin
+  -- Output assignments
+  data_send <= data_send_int;
 
-    process(clk)
-    begin
-        if rst = '1' then
-            buff <= (others => (others => '0'));
-            count <= 0;
-            ready <= '0';
-            data_out <= (others => '0');
-        elsif rising_edge(clk) then
-            if data_valid = '1' and count = 0 and ready = '0' then
-                -- Split 24-bit inputs into 8-bit chunks and store in buffer
-                buff(0) <= data_in_0(23 downto 16);
-                buff(1) <= data_in_0(15 downto 8);
-                buff(2) <= data_in_0(7 downto 0);
-                buff(3) <= data_in_1(23 downto 16);
-                buff(4) <= data_in_1(15 downto 8);
-                buff(5) <= data_in_1(7 downto 0);
-                buff(6) <= data_in_2(23 downto 16);
-                buff(7) <= data_in_2(15 downto 8);
-                buff(8) <= data_in_2(7 downto 0);
-                buff(9) <= data_in_3(23 downto 16);
-                buff(10) <= data_in_3(15 downto 8);
-                buff(11) <= data_in_3(7 downto 0);
-                ready <= '1';
-            elsif ready = '1' and busy = '0' and count < 12 then
-                -- Transmit data sequentially
-                data_out <= buff(count);
-                count <= count + 1;
-            elsif count = 12 then
-                ready <= '0';
-                count <= 0;
+  -- Process to manage buffer loading and byte transmission
+  process (clk, rst)
+  begin
+    if rst = '1' then
+      state         <= IDLE;
+      byte_counter  <= 0;
+      data_send_int <= '0';
+      data_out      <= (others => '0');
+      buff          <= (others => '0');
+    elsif rising_edge(clk) then
+      case state is
+        when IDLE =>
+          data_send_int <= '0';
+          byte_counter  <= 0;
+
+          if data_valid = '1' then
+            state <= LOAD_BUFFER;
+          end if;
+
+        when LOAD_BUFFER =>
+          -- Load the four 24-bit inputs into the buffer
+          buff(23 downto 0)   <= data_in_0; -- Bytes 0-2
+          buff(47 downto 24)  <= data_in_1; -- Bytes 3-5
+          buff(71 downto 48)  <= data_in_2; -- Bytes 6-8
+          buff(95 downto 72)  <= data_in_3; -- Bytes 9-11
+          state <= SEND_BYTE;
+
+        when SEND_BYTE =>
+          -- Output the current byte (LSB first within each 24-bit value)
+          data_out      <= buff((byte_counter + 1) * 8 - 1 downto byte_counter * 8);
+          data_send_int <= '1'; -- Trigger transmission
+          state         <= WAIT_BUSY;
+
+        when WAIT_BUSY =>
+          data_send_int <= '0'; -- Clear data_send after one cycle
+
+          if busy = '0' then -- Wait until uart_tx is not busy
+            if byte_counter = 11 then
+              state <= IDLE; -- All bytes sent
+            else
+              byte_counter <= byte_counter + 1;
+              state        <= SEND_BYTE; -- Send next byte
             end if;
-        end if;
-    end process;
-    
-    data_send <= ready;
+          end if;
+      end case;
+    end if;
+  end process;
+
 end Behavioral;

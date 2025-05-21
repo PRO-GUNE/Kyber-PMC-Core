@@ -195,7 +195,7 @@ begin
     data_in_1 => rd_data_1,
     data_in_2 => rd_data_2,
     data_in_3 => rd_data_3,
-    data_valid => read_valid,
+    data_valid => buf_full,
     data_send => data_send,
     data_out => tx_data
   );

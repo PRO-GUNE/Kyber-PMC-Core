@@ -35,7 +35,7 @@ while not uart.in_waiting:
 if uart.in_waiting:
     response = uart.read(len(byte_array) + 1)
     values = [
-        int(response.hex()[i : i + 2], 16) for i in range(2, len(response.hex()), 2)
+        int(response.hex()[i : i + 2], 16) for i in range(0, len(response.hex()), 2)
     ]
     print(f"Received from FPGA: {response.hex()[2:]}")
     print(values)
